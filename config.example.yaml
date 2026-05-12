@@ -1,0 +1,11 @@
+app:
+  name: hsb-data-sync
+  env: dev
+
+postgres:
+  dsn: postgres://user:password@localhost:5432/db
+
+redis:
+  addr: localhost:6379
+  password: ""
+  db: 0
