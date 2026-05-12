@@ -16,7 +16,7 @@ import (
 type App struct {
 	Logger     *slog.Logger
 	Config     *config.Config
-	Redis      *redis.Client
+	Redis      *redis.RedisClient
 	DB         *pgxpool.Pool
 	SharedData *SharedData
 	Manager    *Manager
@@ -80,7 +80,7 @@ func (a *App) prepareLogger() error {
     }))
 
     slog.SetDefault(a.Logger)
-	
+
 	a.Logger.Info("logger initialized successfully")
 	return nil
 }

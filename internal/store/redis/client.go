@@ -13,26 +13,26 @@ type RedisConfig struct {
 	DB       int
 }
 
-type Client struct {
-	redis *redis.Client
+type RedisClient struct {
+	client *redis.Client
 }
 
 // New creates a new Redis client and verifies the connection.
-func New(ctx context.Context, cfg RedisConfig) (*Client, error) {
-	rdb := redis.NewClient(&redis.Options{
+func New(ctx context.Context, cfg RedisConfig) (*RedisClient, error) {
+	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	})
 
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, fmt.Errorf("redis ping: %w", err)
 	}
 
-	return &Client{redis: rdb}, nil
+	return &RedisClient{client: client}, nil
 }
 
 // Close closes the Redis connection.
-func (c *Client) Close() error {
-	return c.redis.Close()
+func (rc *RedisClient) Close() error {
+	return rc.client.Close()
 }
