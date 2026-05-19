@@ -10,7 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/config"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres/repository"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/redis"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/shared"
 )
 
 type App struct {
@@ -18,7 +20,7 @@ type App struct {
 	Config     *config.Config
 	Redis      *redis.RedisClient
 	DB         *pgxpool.Pool
-	SharedData *SharedData
+	SharedData *shared.SharedData
 	Manager    *Manager
 }
 
@@ -38,6 +40,10 @@ func NewApp(ctx context.Context) (*App, error) {
 	}
 
 	if err := app.preparePostgres(ctx); err != nil {
+		return nil, err
+	}
+
+	if err := app.prepareSharedData(ctx); err != nil {
 		return nil, err
 	}
 
@@ -146,5 +152,24 @@ func (a *App) prepareManager() error {
 	a.Manager = NewManager(a)
 
 	a.Logger.Info("manager initialized successfully")
+	return nil
+}
+
+func (a *App) prepareSharedData(ctx context.Context) error {
+	a.SharedData = shared.NewSharedData(map[string]any{})
+	a.Logger.Info("shared data store initialized successfully")
+
+	test := repository.NewPostgresSystemKVRepository(a.DB)
+	items, err := test.GetValuesByKeys(ctx, []string{"test_key", "test_data"})
+	if err != nil {
+		a.Logger.Error("error fetching test_key from database", "error", err)
+	} else {
+		for _, item := range items {
+			a.Logger.Info("fetched data from database", "key", item.Key, "value", item.Value)
+		}
+	}
+
+	shared.Set(a.SharedData, shared.KeyTest, 12345)
+
 	return nil
 }
