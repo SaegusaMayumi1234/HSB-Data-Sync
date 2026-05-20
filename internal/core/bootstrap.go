@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/config"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/constant"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/domain/hypixel"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres/repository"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/redis"
@@ -157,19 +160,41 @@ func (a *App) prepareManager() error {
 
 func (a *App) prepareSharedData(ctx context.Context) error {
 	a.SharedData = shared.NewSharedData(map[string]any{})
-	a.Logger.Info("shared data store initialized successfully")
 
-	test := repository.NewPostgresSystemKVRepository(a.DB)
-	items, err := test.GetValuesByKeys(ctx, []string{"test_key", "test_data"})
+	systemKVRepository := repository.NewPostgresSystemKVRepository(a.DB)
+
+	systemKVRows, err := systemKVRepository.GetValuesByKeys(ctx, []string{
+		constant.SystemKVKeys.NeuRepoConstantsPets, 
+		constant.SystemKVKeys.HypixelResourcesSkyblockItems,
+		constant.SystemKVKeys.HypixelResourcesSkyblockSkills,
+	})
+
 	if err != nil {
-		a.Logger.Error("error fetching test_key from database", "error", err)
+		a.Logger.Error("error fetching system KV values from database", "error", err)
 	} else {
-		for _, item := range items {
-			a.Logger.Info("fetched data from database", "key", item.Key, "value", item.Value)
+		for _, item := range systemKVRows {
+			switch item.Key {
+			case constant.SystemKVKeys.NeuRepoConstantsPets:
+				shared.Set(a.SharedData, shared.KeyNeuRepoConstantsPets, item.Value)
+			case constant.SystemKVKeys.HypixelResourcesSkyblockSkills:
+				var skyblockSkillsResponse hypixel.SkyblockSkillsResponse
+				if err := json.Unmarshal(item.Value, &skyblockSkillsResponse); err != nil {
+					return fmt.Errorf("error unmarshaling skyblock skills response: %w", err)
+				}
+				shared.Set(a.SharedData, shared.KeySkyblockVersion, skyblockSkillsResponse.Version)
+			case constant.SystemKVKeys.HypixelResourcesSkyblockItems:
+				lookup, err := hypixel.BuildSkyblockItemsReferenceLookupMap(item.Value)
+				if err != nil {
+					return fmt.Errorf("error building skyblock items reference lookup map: %w", err)
+				}
+				shared.Set(a.SharedData, shared.KeySkyblockItemsReferenceLookupMap, lookup)
+			default:
+				a.Logger.Warn("encountered unknown system KV key", "key", item.Key)
+			}
+			a.Logger.Info("loaded system KV value into shared data", "key", item.Key)
 		}
 	}
 
-	shared.Set(a.SharedData, shared.KeyTest, 12345)
-
+	a.Logger.Info("shared data store initialized successfully")
 	return nil
 }
