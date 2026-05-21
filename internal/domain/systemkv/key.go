@@ -1,6 +1,6 @@
-package constant
+package systemkv
 
-var SystemKVKeys = struct {
+var Keys = struct {
 	NeuRepoConstantsPets           string
 	HypixelResourcesSkyblockSkills string
 	HypixelResourcesSkyblockItems  string

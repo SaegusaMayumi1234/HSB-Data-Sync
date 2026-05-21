@@ -10,8 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/config"
-	"github.com/saegusamayumi1234/hsb-data-sync/internal/constant"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/domain/hypixel"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/domain/systemkv"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/postgres/repository"
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/store/redis"
@@ -164,9 +164,9 @@ func (a *App) prepareSharedData(ctx context.Context) error {
 	systemKVRepository := repository.NewPostgresSystemKVRepository(a.DB)
 
 	systemKVRows, err := systemKVRepository.GetValuesByKeys(ctx, []string{
-		constant.SystemKVKeys.NeuRepoConstantsPets, 
-		constant.SystemKVKeys.HypixelResourcesSkyblockItems,
-		constant.SystemKVKeys.HypixelResourcesSkyblockSkills,
+		systemkv.Keys.NeuRepoConstantsPets, 
+		systemkv.Keys.HypixelResourcesSkyblockItems,
+		systemkv.Keys.HypixelResourcesSkyblockSkills,
 	})
 
 	if err != nil {
@@ -174,15 +174,15 @@ func (a *App) prepareSharedData(ctx context.Context) error {
 	} else {
 		for _, item := range systemKVRows {
 			switch item.Key {
-			case constant.SystemKVKeys.NeuRepoConstantsPets:
+			case systemkv.Keys.NeuRepoConstantsPets:
 				shared.Set(a.SharedData, shared.KeyNeuRepoConstantsPets, item.Value)
-			case constant.SystemKVKeys.HypixelResourcesSkyblockSkills:
+			case systemkv.Keys.HypixelResourcesSkyblockSkills:
 				var skyblockSkillsResponse hypixel.SkyblockSkillsResponse
 				if err := json.Unmarshal(item.Value, &skyblockSkillsResponse); err != nil {
 					return fmt.Errorf("error unmarshaling skyblock skills response: %w", err)
 				}
 				shared.Set(a.SharedData, shared.KeySkyblockVersion, skyblockSkillsResponse.Version)
-			case constant.SystemKVKeys.HypixelResourcesSkyblockItems:
+			case systemkv.Keys.HypixelResourcesSkyblockItems:
 				lookup, err := hypixel.BuildSkyblockItemsReferenceLookupMap(item.Value)
 				if err != nil {
 					return fmt.Errorf("error building skyblock items reference lookup map: %w", err)
