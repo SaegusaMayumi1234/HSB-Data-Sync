@@ -117,7 +117,7 @@ func (m *Manager) jobLogger(j Job, jt JobType) *slog.Logger {
 func (m *Manager) runOnce(j Job, log *slog.Logger) error {
     log.Info("job starting")
     start := time.Now()
-    err := j.Run(m.ctx, &JobConfig{app: m.app, logger: log})
+    err := j.Run(m.ctx, &JobConfig{App: m.app, Logger: log})
     if err != nil {
         log.Error("job failed", "error", err, "duration", time.Since(start))
         return err
@@ -161,7 +161,7 @@ func (m *Manager) runDynamic(j DynamicJob) {
     var lastErr error
     for {
         // Ask the job how long to wait before the next run.
-        next, err := j.NextInterval(m.ctx, &JobConfig{app: m.app, logger: log}, lastErr)
+        next, err := j.NextInterval(m.ctx, &JobConfig{App: m.app, Logger: log}, lastErr)
         if err != nil {
             log.Error("job stopped", "reason", "scheduling error", "error", err)
             return

@@ -6,14 +6,14 @@ import (
 )
 
 type SkyblockItemReferenceResponse struct {
-	Success     bool                             `json:"success"`
-	LastUpdated int64                            `json:"lastUpdated"`
+	Success     bool              `json:"success"`
+	LastUpdated int64             `json:"lastUpdated"`
 	Items       []json.RawMessage `json:"items"`
 }
 
 type SkyblockItemReference struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id   string         `json:"id"`
+	Name string         `json:"name"`
 	// RawMessage preserves unknown fields without a strict schema
 	Raw json.RawMessage `json:"-"`
 }

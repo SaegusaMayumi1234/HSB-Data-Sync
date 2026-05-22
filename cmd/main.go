@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/saegusamayumi1234/hsb-data-sync/internal/core"
+	"github.com/saegusamayumi1234/hsb-data-sync/internal/job"
 )
 
 func main() {
@@ -20,6 +21,8 @@ func main() {
 	}
 
 	app.Logger.Info("application started successfully")
+
+	app.Manager.RegisterCron(job.NewSkyblockItemsUpdater())
 
 	app.Manager.Start()
 

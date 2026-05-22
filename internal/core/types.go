@@ -18,8 +18,8 @@ const (
 )
 
 type JobConfig struct {
-    app    *App
-    logger *slog.Logger
+    App    *App
+    Logger *slog.Logger
 }
 
 // Job is the base interface every job must implement.
